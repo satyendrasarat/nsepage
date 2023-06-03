@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>NSE Option Chain</title>
+  <style>
+    table {
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="option-chain"></div>
+
+  <script>
+    function fetchData() {
+      // Get the data from the NSE API
+      var url = "https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY";
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", url, true);
+      xhr.onload = function() {
+        // Parse the JSON data
+        var response = JSON.parse(xhr.responseText);
+        var rawop = response.filtered.data;
+
+        // Create an HTML table to display the data
+        var table = document.createElement("table");
+        var thead = document.createElement("thead");
+        var tbody = document.createElement("tbody");
+
+        // Create table headers
+        var headerRow = document.createElement("tr");
+        var headers = ["CALL OI", "CALL CHNG OI", "CALL LTP", "STRIKE PRICE", "PUT OI", "PUT CHNG OI", "PUT LTP"];
+        headers.forEach(function(header) {
+          var th = document.createElement("th");
+          th.textContent = header;
+          headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // Create table rows
+        rawop.forEach(function(data) {
+          var row = document.createElement("tr");
+          var values = [
+            data.CE ? data.CE.openInterest : 0,
+            data.CE ? data.CE.changeinOpenInterest : 0,
+            data.CE ? data.CE.lastPrice : 0,
+            data.strikePrice,
+            data.PE ? data.PE.openInterest : 0,
+            data.PE ? data.PE.changeinOpenInterest : 0,
+            data.PE ? data.PE.lastPrice : 0
+          ];
+          values.forEach(function(value) {
+            var cell = document.createElement("td");
+            cell.textContent = value;
+            row.appendChild(cell);
+          });
+          tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+
+        // Replace the existing table with the new one
+        var oldTable = document.getElementById("option-chain").getElementsByTagName("table")[0];
+        if (oldTable) {
+          document.getElementById("option-chain").replaceChild(table, oldTable);
+        } else {
+          document.getElementById("option-chain").appendChild(table);
+        }
+      };
+      xhr.send();
+    }
+
+    // Initial fetch
+    fetchData();
+
+    // Refresh every 5 seconds
+    setInterval(fetchData, 5000);
+  </script>
+</body>
+</html>
